@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
             ind = arr[ind];
         } while (ind);
         times[i] = dur(clk::now() - beg).count();
-        std::cout << times[i] << '\t' << (times[i]/size)*1e9 << '\n';
+        std::cout << size << "_run" << i+1 << '\t' << times[i] << '\t' << (times[i]/size)*1e9 << '\n';
     }
 
     //output results
