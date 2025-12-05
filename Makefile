@@ -1,4 +1,4 @@
-progs = permutationGenerator
+progs = permutationGenerator permutationFollower
 
 all: $(progs)
 

@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
     if (argc != 2 || (size = strtoull(argv[1], &t, 10)) == 0  || errno) {
         std::cerr << "Generates a permutation of length n with exactly one cycle.\n"
             << "Outputs to stdout n+1 64-bit integers (the first is n, the rest is the permutation).\n"
-            << "Exactly one parameter must be passed: a nonnegative nonzero integer." << std::endl;
+            << "Exactly one parameter must be passed, n: a nonnegative nonzero integer." << std::endl;
         return 1;
     }
 
@@ -51,6 +51,15 @@ int main(int argc, char* argv[]) {
 
     std::cout.write(reinterpret_cast<char*>(&size), sizeof(uint64_t));
     std::cout.write(reinterpret_cast<char*>(arr2), sizeof(uint64_t)*size);
+
+    /*
+    std::cerr << size << std::endl;
+    for (uint64_t i = 0; i < size; ++i)
+        std::cerr << arr2[i] << '\t';
+    std::cerr << std::endl;
+    */
     
     delete [] arr2;
+
+    return 0;
 }
