@@ -52,6 +52,7 @@ int main(int argc, char* argv[]) {
     //test
     double* times = new double[iterations];
 
+    std::cout << size*8 << '\t' << size;
     for (uint64_t i = 0; i < iterations; ++i) {
         beg = clk::now();
         volatile uint64_t ind = 0;
@@ -59,8 +60,9 @@ int main(int argc, char* argv[]) {
             ind = arr[ind];
         } while (ind);
         times[i] = dur(clk::now() - beg).count();
-        std::cout << size << "_run" << i+1 << '\t' << times[i] << '\t' << (times[i]/size)*1e9 << '\n';
+        std::cout << '\t' << (times[i]/size)*1e9;
     }
+    std::cout << '\n';
 
     //output results
     //for (uint64_t i = 0; i < iterations; ++i)
