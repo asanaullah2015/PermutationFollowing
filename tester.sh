@@ -5,12 +5,10 @@
 #SBATCH --cpus-per-task=128
 #SBATCH --mem=0
 #SBATCH --time=720:00:00
-#SBATCH --output=permTest
 
 
-
-if [ $# -ne 4 ]; then
-    echo "Please specify exactly 4 command line arguments: permutationGenerator, permutationFollower, numIterations, and maxPerm"
+if [ $# -ne 5 ]; then
+    echo "Please specify exactly 5 command line arguments: permutationGenerator, permutationFollower, numIterations, maxPerm, and outputFile"
     exit 1
 fi
 
@@ -25,6 +23,7 @@ gen=$1
 fol=$2
 numIter=$3
 maxPerm=$4
+outputFile=$5
 
 #print header
 echo -n -e "bytes,elements"
@@ -39,7 +38,7 @@ curSize=1
 for curSize in $sizes 
 do 
     $gen $curSize 2> /dev/null | $fol $numIter 2> /dev/null | tr '\t' ',' 
-done | tee permTestRaw
+done | tee $outputFile
 
 echo -n "Ending on "
 date

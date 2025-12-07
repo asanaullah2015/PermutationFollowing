@@ -1,6 +1,7 @@
 progs = permutationGenerator permutationFollower
 numIter = 5
 maxPerm = 1048576
+outputPrefix = testPerm
 
 .PHONY: all clean test
 
@@ -10,9 +11,10 @@ clean:
 	rm $(progs)
 
 test: $(progs)
-	./tester.sh ./permutationGenerator ./permutationFollower $(numIter) $(maxPerm)
+	./tester.sh ./permutationGenerator ./permutationFollower $(numIter) $(maxPerm) $(outputPrefix)Raw
 
 testbatch: $(progs)
-	sbatch ./tester.sh ./permutationGenerator ./permutationFollower $(numIter) $(maxPerm)
+	sbatch -o $(outputPrefix) ./tester.sh ./permutationGenerator ./permutationFollower $(numIter) $(maxPerm) $(outputPrefix)Raw
+
 %: %.cpp
 	$(CXX) -O3 $(CXXFLAGS) $< -o $@
