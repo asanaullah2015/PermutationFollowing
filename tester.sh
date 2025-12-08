@@ -34,7 +34,6 @@ done
 echo
 
 sizes=`for ((curSize=1; curSize <= maxPerm; curSize*=2)); do echo -n $curSize ' '; done`
-curSize=1
 for curSize in $sizes 
 do 
     $gen $curSize 2> /dev/null | $fol $numIter 2> /dev/null | tr '\t' ',' 

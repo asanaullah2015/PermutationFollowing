@@ -1,6 +1,6 @@
 SHELL = /bin/bash
 
-progs = permutationGenerator permutationFollower
+progs = ./permutationGenerator ./permutationFollower
 numIter = 5
 maxPerm = 1048576
 outputPrefix = testPerm
@@ -19,10 +19,10 @@ generate: permutationGenerator
 	done
 
 test: $(progs)
-	./tester.sh $^ $(numIter) $(maxPerm) $(outputPrefix)Raw
+	./tester.sh $(progs) $(numIter) $(maxPerm) $(outputPrefix)Raw
 
 testbatch: $(progs)
-	sbatch -o $(outputPrefix) ./tester.sh $^ $(numIter) $(maxPerm) $(outputPrefix)Raw
+	sbatch -o $(outputPrefix) ./tester.sh $(progs) $(numIter) $(maxPerm) $(outputPrefix)Raw
 
 %: %.cpp
 	$(CXX) -O3 $(CXXFLAGS) $< -o $@

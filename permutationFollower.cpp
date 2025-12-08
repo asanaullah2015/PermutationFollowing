@@ -1,6 +1,7 @@
 #include<iostream>
 #include<cstdint>
 #include<chrono>
+#include<unistd.h> //linux/UNIX specific
 
 int main(int argc, char* argv[]) {
     uint64_t iterations;
@@ -15,17 +16,35 @@ int main(int argc, char* argv[]) {
 
     using clk = std::chrono::high_resolution_clock;
     using dur = std::chrono::duration<double>;
-    auto beg = clk::now();
+    auto beg = clk::now(), end = clk::now();
+
+    uint64_t cacheLineSize = sysconf(_SC_LEVEL1_DCACHE_LINESIZE); //linux/UNIX specific
+    std::cerr << "Cache Line Size: " << cacheLineSize << std::endl;
+
+    uint64_t intsPerLine = cacheLineSize/sizeof(uint64_t) + (cacheLineSize % sizeof(uint64_t) != 0);
+    std::cerr << "uint64_t per cache line: " << intsPerLine << std::endl;
+
 
     //get array
-    uint64_t size;
-    std::cin.read(reinterpret_cast<char*>(&size), sizeof(uint64_t));
+    uint64_t elements, size;
+    std::cin.read(reinterpret_cast<char*>(&elements), sizeof(uint64_t));
+    size = elements*intsPerLine;
     beg = clk::now();
     uint64_t *arr = new uint64_t[size];
-    std::cerr << "Allocating arr of size " << size << " took " << dur(clk::now() - beg).count() << " seconds" << std::endl;
+    end = clk::now();
+    std::cerr << "Allocating arr of size " << size*sizeof(uint64_t) << " bytes took " << dur(end - beg).count() << " seconds" << std::endl;
     beg = clk::now();
     std::cin.read(reinterpret_cast<char*>(arr), sizeof(uint64_t)*size);
-    std::cerr << "Reading arr of size " << size << " took " << dur(clk::now() - beg).count() << " seconds" << std::endl;
+    end = clk::now();
+    std::cerr << "Reading arr of size " << size << " took " << dur(end - beg).count() << " seconds" << std::endl;
+    beg = clk::now();
+    uint64_t orig = elements;
+    for (uint64_t i = size; i -= intsPerLine;) {
+        arr[i] = arr[--orig];
+        arr[orig] = 0;
+    }
+    end = clk::now();
+
 
     /*
     std::cerr << size << std::endl;
@@ -39,34 +58,36 @@ int main(int argc, char* argv[]) {
     double temp;
     uint64_t ind = 0, jumps = 0;
     do {
-        ind = arr[ind];
+        ind = arr[ind*intsPerLine];
         ++jumps;
-    } while (ind && jumps <= size);
-    if (jumps != size) {
-        std::cerr << "Read permutation is not a cycle of length " << size << "!\n";
+    } while (ind && jumps <= elements);
+    end = clk::now();
+    if (jumps != elements) {
+        std::cerr << "Read permutation is not a cycle of length " << elements << "!\n";
         return 1;
     }
-    std::cerr << "Verifying read permutation is a cycle of length one took " << (temp = dur(clk::now() - beg).count()) << " seconds."
-       << " Average jump of " << (temp/size)*1e9 << " nanoseconds.\n";
+    std::cerr << "Verifying read permutation is a cycle of length one took " << (temp = dur(end - beg).count()) << " seconds."
+       << " Average jump of " << (temp/elements)*1e9 << " nanoseconds.\n";
 
     //test
     double* times = new double[iterations];
 
-    std::cout << size*8 << '\t' << size;
+    std::cout << size*8 << '\t' << elements;
     for (uint64_t i = 0; i < iterations; ++i) {
         beg = clk::now();
         volatile uint64_t ind = 0;
         do {
-            ind = arr[ind];
+            ind = arr[ind*intsPerLine];
         } while (ind);
-        times[i] = dur(clk::now() - beg).count();
-        std::cout << '\t' << (times[i]/size)*1e9;
+        end = clk::now();
+        times[i] = dur(end - beg).count();
+        std::cout << '\t' << (times[i]/elements)*1e9;
     }
     std::cout << '\n';
 
     //output results
     //for (uint64_t i = 0; i < iterations; ++i)
-        //std::cout << times[i] << '\t' << times[i]/size << '\n';
+        //std::cout << times[i] << '\t' << times[i]/elements << '\n';
 
     return 0;
 }
