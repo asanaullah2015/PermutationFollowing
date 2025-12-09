@@ -22,7 +22,7 @@ test: $(progs)
 	./tester.sh $(progs) $(numIter) $(maxPerm) $(outputPrefix)Raw
 
 testbatch: $(progs)
-	sbatch -o $(outputPrefix) ./tester.sh $(progs) $(numIter) $(maxPerm) $(outputPrefix)Raw
+	sbatch -o $(outputPrefix)Batch ./tester.sh $(progs) $(numIter) $(maxPerm) $(outputPrefix)BatchRaw
 
 %: %.cpp
 	$(CXX) -O3 $(CXXFLAGS) $< -o $@

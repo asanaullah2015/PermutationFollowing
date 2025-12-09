@@ -18,49 +18,75 @@ int main(int argc, char* argv[]) {
     using dur = std::chrono::duration<double>;
     auto beg = clk::now(), end = clk::now();
 
-    uint64_t cacheLineSize = sysconf(_SC_LEVEL1_DCACHE_LINESIZE); //linux/UNIX specific
+    const uint64_t cacheLineSize = sysconf(_SC_LEVEL1_DCACHE_LINESIZE); //linux/UNIX specific
+    const uint64_t bytesPerPointer = sizeof(void*);
+    const uint64_t bytesPerInt = sizeof(uint64_t);
     std::cerr << "Cache Line Size: " << cacheLineSize << std::endl;
+    std::cerr << "Size of void*: " << bytesPerPointer << std::endl;
+    std::cerr << "Size of uint64_t: " << bytesPerInt << std::endl;
 
-    uint64_t intsPerLine = cacheLineSize/sizeof(uint64_t) + (cacheLineSize % sizeof(uint64_t) != 0);
+    if (bytesPerPointer < bytesPerInt) {
+        std::cerr << "Invalidated assumption that pointer uses less bytes than uint64_t. Exiting!" << std::endl;
+        return 1;
+    }
+    if (bytesPerPointer > cacheLineSize ) {
+        std::cerr << "Invalidated assumption that pointer fits within one cache line. Exiting!" << std::endl;
+        return 1;
+    }
+    if (bytesPerInt > cacheLineSize) {
+        std::cerr << "Invalidated assumption that uint64_t fits within one cache line. Exiting!" << std::endl;
+        return 1;
+    }
+    if (cacheLineSize % bytesPerPointer ) {
+        std::cerr << "Invalidated assumption that pointer aligns to cache line. Exiting!" << std::endl;
+        return 1;
+    }
+    if (cacheLineSize % bytesPerInt) {
+        std::cerr << "Invalidated assumption that uint64_t aligns to cache line. Exiting!" << std::endl;
+        return 1;
+    }
+
+    uint64_t intsPerLine = cacheLineSize/bytesPerInt;
     std::cerr << "uint64_t per cache line: " << intsPerLine << std::endl;
+
+    uint64_t pointersPerLine = cacheLineSize/bytesPerPointer;
+    std::cerr << "void* per cache line: " << pointersPerLine << std::endl;
+
 
 
     //get array
-    uint64_t elements, size;
-    std::cin.read(reinterpret_cast<char*>(&elements), sizeof(uint64_t));
-    size = elements*intsPerLine;
+    uint64_t elements, arrIntSize;
+    std::cin.read(reinterpret_cast<char*>(&elements), bytesPerInt);
+    arrIntSize = elements*intsPerLine;
     beg = clk::now();
-    uint64_t *arr = new uint64_t[size];
+    uint64_t *arrInt = new uint64_t[arrIntSize];
     end = clk::now();
-    std::cerr << "Allocating arr of size " << size*sizeof(uint64_t) << " bytes took " << dur(end - beg).count() << " seconds" << std::endl;
+    std::cerr << "Allocating array of size " << arrIntSize*bytesPerInt << " bytes (aka " << elements << " cache lines) took " << dur(end - beg).count() << " seconds" << std::endl;
     beg = clk::now();
-    std::cin.read(reinterpret_cast<char*>(arr), sizeof(uint64_t)*size);
+    std::cin.read(reinterpret_cast<char*>(arrInt), bytesPerInt*arrIntSize);
     end = clk::now();
-    std::cerr << "Reading arr of size " << size << " took " << dur(end - beg).count() << " seconds" << std::endl;
+    std::cerr << "Reading array of size " << arrIntSize << " bytes took " << dur(end - beg).count() << " seconds" << std::endl;
+
+    //convert to pointer array
     beg = clk::now();
+    void** arr = reinterpret_cast<void**>(arrInt);
     uint64_t orig = elements;
-    for (uint64_t i = size; i -= intsPerLine;) {
-        arr[i] = arr[--orig];
-        arr[orig] = 0;
+    for (uint64_t i = elements*pointersPerLine; i -= pointersPerLine;) {
+        arr[i] = arr + (arrInt[--orig] * pointersPerLine);
+        arrInt[orig] = 0;
     }
+    arr[0] = arr + (arrInt[0] * pointersPerLine);
     end = clk::now();
-
-
-    /*
-    std::cerr << size << std::endl;
-    for (uint64_t i = 0; i < size; ++i)
-        std::cerr << arr[i] << '\t';
-    std::cerr << std::endl;
-    */
 
     //verify
     beg = clk::now();
     double temp;
     uint64_t ind = 0, jumps = 0;
+    void** p = arr;
     do {
-        ind = arr[ind*intsPerLine];
+        p = reinterpret_cast<void**>(*p);
         ++jumps;
-    } while (ind && jumps <= elements);
+    } while (p != arr && jumps <= elements);
     end = clk::now();
     if (jumps != elements) {
         std::cerr << "Read permutation is not a cycle of length " << elements << "!\n";
@@ -72,22 +98,24 @@ int main(int argc, char* argv[]) {
     //test
     double* times = new double[iterations];
 
-    std::cout << size*8 << '\t' << elements;
+    jumps = std::max(elements, static_cast<uint64_t>(1) << 20);
+    std::cout << elements*cacheLineSize << '\t' << elements << '\t' << jumps;
     for (uint64_t i = 0; i < iterations; ++i) {
+        void** p = arr;
         beg = clk::now();
-        volatile uint64_t ind = 0;
-        do {
-            ind = arr[ind*intsPerLine];
-        } while (ind);
+        for (uint64_t i = 0; i < jumps; ++i)
+            p = reinterpret_cast<void**>(*p);
         end = clk::now();
         times[i] = dur(end - beg).count();
-        std::cout << '\t' << (times[i]/elements)*1e9;
+        std::cout << '\t' << (times[i]/jumps)*1e9;
+        times[i] = p - arr;
     }
     std::cout << '\n';
 
     //output results
-    //for (uint64_t i = 0; i < iterations; ++i)
-        //std::cout << times[i] << '\t' << times[i]/elements << '\n';
+    for (uint64_t i = 0; i < iterations; ++i)
+        std::cerr << times[i] << '\t';
+    std::cerr << '\n';
 
     return 0;
 }

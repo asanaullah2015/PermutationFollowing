@@ -26,7 +26,7 @@ maxPerm=$4
 outputFile=$5
 
 #print header
-echo -n -e "bytes,elements"
+echo -n -e "bytes,elements,jumps"
 for ((curRun=1; curRun <= numIter; ++curRun))
 do
     echo -n -e ",run $curRun"
