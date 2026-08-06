@@ -1,6 +1,6 @@
 SHELL = /bin/bash
 
-progs = ./permutationGenerator ./permutationFollower
+progs = ./permutationGenerator ./permutationFollowerSequential
 numIter = 5
 maxPerm = 1048576
 outputPrefix = testPerm

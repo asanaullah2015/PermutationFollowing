@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH -w c0-5
+#SBATCH -w node07
 #SBATCH --nodes=1
 #SBATCH --exclusive
-#SBATCH --cpus-per-task=128
+#SBATCH --cpus-per-task=64
 #SBATCH --mem=0
 #SBATCH --time=720:00:00
 

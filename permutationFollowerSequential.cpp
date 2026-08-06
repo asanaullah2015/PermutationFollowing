@@ -22,6 +22,7 @@ int main(int argc, char* argv[]) {
     const uint64_t bytesPerPointer = sizeof(void*);
     const uint64_t bytesPerInt = sizeof(uint64_t);
     std::cerr << "Cache Line Size: " << cacheLineSize << std::endl;
+    std::cerr << "Page Size: " << sysconf(_SC_PAGESIZE) << std::endl;
     std::cerr << "Size of void*: " << bytesPerPointer << std::endl;
     std::cerr << "Size of uint64_t: " << bytesPerInt << std::endl;
 
@@ -99,6 +100,7 @@ int main(int argc, char* argv[]) {
     double* times = new double[iterations];
 
     jumps = std::max(elements, static_cast<uint64_t>(1) << 20);
+    jumps = std::min(jumps, static_cast<uint64_t>(1) << 25);
     std::cout << elements*cacheLineSize << '\t' << elements << '\t' << jumps;
     for (uint64_t i = 0; i < iterations; ++i) {
         void** p = arr;

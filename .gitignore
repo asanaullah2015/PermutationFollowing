@@ -1,3 +1,4 @@
 permutationGenerator
-permutationFollower
+permutationFollowerSequential
 permTest*
+slurm-*.out
