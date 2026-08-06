@@ -2,6 +2,7 @@
 #include<cstdint>
 #include<chrono>
 #include<unistd.h> //linux/UNIX specific
+#include<perfcpp/event_counter.hpp>
 
 int main(int argc, char* argv[]) {
     uint64_t iterations;
@@ -102,17 +103,36 @@ int main(int argc, char* argv[]) {
     jumps = std::max(elements, static_cast<uint64_t>(1) << 20);
     jumps = std::min(jumps, static_cast<uint64_t>(1) << 25);
     std::cout << elements*cacheLineSize << '\t' << elements << '\t' << jumps;
+
+    auto config = perf::Config{};
+    config.include_kernel(false);       /// Disable kernel event recording.
+    config.include_hypervisor(false);   /// Disable hypervisor event recording.
+
+    std::vector<perf::CounterResult> counts(iterations);
     for (uint64_t i = 0; i < iterations; ++i) {
+        auto event_counter = perf::EventCounter{ config };
+        //event_counter.add({"seconds", "instructions", "cycles", "cache-misses"});
+        //event_counter.add({"seconds", "instructions", "cycles"});
+        event_counter.add("cache-misses");
         void** p = arr;
         beg = clk::now();
+        event_counter.start();
         for (uint64_t i = 0; i < jumps; ++i)
             p = reinterpret_cast<void**>(*p);
+        event_counter.stop();
         end = clk::now();
+        counts[i] = event_counter.result();
         times[i] = dur(end - beg).count();
         std::cout << '\t' << (times[i]/jumps)*1e9;
         times[i] = p - arr;
     }
     std::cout << '\n';
+    for (const auto [event_name, value] : counts[0]) {
+        std::cout << event_name << "\t|\t:";
+        for (uint64_t i = 0; i < iterations; ++i)
+            std::cout << '\t' << static_cast<uint64_t>(counts[i][event_name].value());
+        std::cout << '\n';
+    }
 
     //output results
     for (uint64_t i = 0; i < iterations; ++i)
