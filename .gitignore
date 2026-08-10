@@ -1,4 +1,6 @@
 permutationGenerator
 permutationFollowerSequential
+permutationFollowerSequentialHugePages
+perf-cpp
 permTest*
 slurm-*.out

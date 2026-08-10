@@ -1,6 +1,6 @@
 SHELL = /bin/bash
 
-progs = ./permutationGenerator ./permutationFollowerSequential
+progs = ./permutationGenerator ./permutationFollowerSequential ./permutationFollowerSequentialHugePages
 numIter = 5
 maxPerm = 1048576
 outputPrefix = testPerm
@@ -34,7 +34,8 @@ test: $(progs)
 	./tester.sh $(progs) $(numIter) $(maxPerm) $(outputPrefix)Raw
 
 testbatch: $(progs)
-	sbatch -o $(outputPrefix)Batch ./tester.sh $(progs) $(numIter) $(maxPerm) $(outputPrefix)BatchRaw
+	sbatch -o $(outputPrefix)Batch ./tester.sh ./permutationGenerator ./permutationFollowerSequential $(numIter) $(maxPerm) $(outputPrefix)BatchRaw
+	sbatch -o $(outputPrefix)Batch ./tester.sh ./permutationGenerator ./permutationFollowerSequentialHugePages $(numIter) $(maxPerm) $(outputPrefix)BatchRaw
 
 %: %.cpp
 	$(CXX) -O3 $(CXXFLAGS) -I$(inc_dir) -L$(lib_dir) $< -o $@ $(LIBS) 

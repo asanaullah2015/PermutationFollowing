@@ -1,10 +1,10 @@
 #!/bin/bash
-#SBATCH -w node07
 #SBATCH --nodes=1
 #SBATCH --exclusive
-#SBATCH --cpus-per-task=64
 #SBATCH --mem=0
 #SBATCH --time=720:00:00
+##SBATCH -w node07
+##SBATCH --cpus-per-task=64
 
 
 if [ $# -ne 5 ]; then
@@ -36,8 +36,8 @@ echo
 sizes=`for ((curSize=1; curSize <= maxPerm; curSize*=2)); do echo -n $curSize ' '; done`
 for curSize in $sizes 
 do 
-    $gen $curSize 2> /dev/null | $fol $numIter 2> /dev/null | tr '\t' ',' 
-done | tee $outputFile
+    $gen $curSize | $fol $numIter | tr '\t' ',' 
+done 2> $outputFile.err | tee $outputFile
 
 echo -n "Ending on "
 date
