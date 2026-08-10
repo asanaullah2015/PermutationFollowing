@@ -80,6 +80,7 @@ int main(int argc, char* argv[]) {
     }
     arr[0] = arr + (arrInt[0] * pointersPerLine);
     end = clk::now();
+    std::cerr << "Converting to pointer array took " << dur(end - beg).count() << " seconds" << std::endl;
 
     uint64_t jumps;
     /*
