@@ -148,6 +148,7 @@ int main(int argc, char* argv[]) {
             times[i] = dur(end - beg).count();
             std::cout << '\t' << (times[i]/(curJumps*conc))*1e9;
         }
+        check += conc;
         std::cout << '\n';
     }
     //for (const auto [event_name, value] : counts[0]) {

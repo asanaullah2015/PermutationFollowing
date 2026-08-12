@@ -4,6 +4,8 @@ permutationFollowerSequentialHugePages
 permutationGeneratorConcurrent
 permutationFollowerConcurrent
 permutationFollowerConcurrentHugePages
+permutationFollowerPrefetch
+permutationFollowerPrefetchHugePages
 perf-cpp
 permTest*
 slurm-*.out

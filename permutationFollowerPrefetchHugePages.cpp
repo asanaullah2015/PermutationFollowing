@@ -150,9 +150,14 @@ int main(int argc, char* argv[]) {
         uint64_t curJumps = jumps/conc + (jumps % conc != 0);
         for (uint64_t i = 0; i < iterations; ++i) {
             beg = clk::now();
+            for (uint64_t k = 0; k < conc; ++k)
+                //__builtin_prefetch(check[k]); //gcc function
+                __builtin_prefetch(check[k], 0, 3); //gcc function
             for (uint64_t j = 0; j < curJumps; ++j) {
                 for (uint64_t k = 0; k < conc; ++k) {
                     check[k] = reinterpret_cast<void**>(*(check[k]));
+                    //__builtin_prefetch(check[k]); //gcc function
+                    __builtin_prefetch(check[k], 0, 3); //gcc function
                 }
             }
             end = clk::now();

@@ -3,11 +3,6 @@
 #include<chrono>
 #include<unistd.h> //linux/UNIX specific
 //#include<perfcpp/event_counter.hpp>
-#include<sys/mman.h> //linux/UNIX specific
-#include<linux/mman.h> //needed since glibc version < 2.40 doesn't define MAP_HUGE_1GB
-#include<errno.h> //linux/UNIX specific
-#include<err.h> //linux/UNIX specific
-#include<string.h>
 
 int main(int argc, char* argv[]) {
     uint64_t iterations;
@@ -28,7 +23,7 @@ int main(int argc, char* argv[]) {
     const uint64_t bytesPerPointer = sizeof(void*);
     const uint64_t bytesPerInt = sizeof(uint64_t);
     std::cerr << "Cache Line Size: " << cacheLineSize << std::endl;
-    std::cerr << "Page Size: " << (1 << 30) << std::endl;
+    std::cerr << "Page Size: " << sysconf(_SC_PAGESIZE) << std::endl;
     std::cerr << "Size of void*: " << bytesPerPointer << std::endl;
     std::cerr << "Size of uint64_t: " << bytesPerInt << std::endl;
 
@@ -67,13 +62,7 @@ int main(int argc, char* argv[]) {
     arrIntSize = elements*intsPerLine;
 
     beg = clk::now();
-    //uint64_t *arrInt = new uint64_t[arrIntSize];
-    uint64_t *arrInt = reinterpret_cast<uint64_t*>(mmap(NULL, arrIntSize*bytesPerInt, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB | MAP_HUGE_1GB, -1, 0));
-    if (arrInt == MAP_FAILED) {
-        perror("mmap");
-        std::cerr << "mmap failed! Error: " << strerror(errno) << " (Code: " << errno << ")\n";
-        err(EXIT_FAILURE, "mmap");
-    }
+    uint64_t *arrInt = new uint64_t[arrIntSize];
     end = clk::now();
     std::cerr << "Allocating array of size " << arrIntSize*bytesPerInt << " bytes (aka " << elements << " cache lines) took " << dur(end - beg).count() << " seconds" << std::endl;
     beg = clk::now();
@@ -150,9 +139,14 @@ int main(int argc, char* argv[]) {
         uint64_t curJumps = jumps/conc + (jumps % conc != 0);
         for (uint64_t i = 0; i < iterations; ++i) {
             beg = clk::now();
+            for (uint64_t k = 0; k < conc; ++k)
+                //__builtin_prefetch(check[k]); //gcc function
+                __builtin_prefetch(check[k], 0, 3); //gcc function
             for (uint64_t j = 0; j < curJumps; ++j) {
                 for (uint64_t k = 0; k < conc; ++k) {
                     check[k] = reinterpret_cast<void**>(*(check[k]));
+                    //__builtin_prefetch(check[k]); //gcc function
+                    __builtin_prefetch(check[k], 0, 3); //gcc function
                 }
             }
             end = clk::now();
