@@ -94,6 +94,9 @@ int main(int argc, char* argv[]) {
         arrInt[orig] = 0;
     }
     arr[0] = arr + (arrInt[0] * pointersPerLine);
+    //for (uint64_t i = 0; i < arrIntSize; i += 1) 
+        //std::cout << (reinterpret_cast<void**>(arr[i]) - (arr))/8 << '\t';
+    //std::cout << std::endl;
 
     void***check = reinterpret_cast<void***>(checkpoints);
     for (uint64_t i = 0; i < concArrSize; ++i)
@@ -136,6 +139,14 @@ int main(int argc, char* argv[]) {
     void** p = arr;
     for (uint64_t conc = 2; conc <= maxConcurrency; ++conc) {
         std::cout << elements*cacheLineSize << '\t' << elements << '\t' << jumps << '\t' << conc;
+        //uint64_t check8sum = 0;
+        //std::cout << "{";
+        //for (uint64_t i = 0; i < 8; ++i) {
+            //std::cout << (check[i]-arr)/8 << ',';
+            //check8sum += (check[i]-arr)/8;
+        //}
+        //std::cout << "}";
+        //std::cout << "<" << check8sum << ">\n";
         uint64_t curJumps = jumps/conc + (jumps % conc != 0);
         for (uint64_t i = 0; i < iterations; ++i) {
             beg = clk::now();
@@ -143,10 +154,25 @@ int main(int argc, char* argv[]) {
                 for (uint64_t k = 0; k < conc; ++k) {
                     check[k] = reinterpret_cast<void**>(*(check[k]));
                 }
+                //check8sum = 0;
+                //std::cout << "{";
+                //for (uint64_t i = 0; i < 8; ++i){
+                    //check8sum += (check[i]-arr)/8;
+                    //std::cout << (check[i]-arr)/8 << ',';
+                //}
+                //std::cout << "}";
+                //std::cout << "<" << check8sum << ">\n";
+                //return 1;
             }
             end = clk::now();
             times[i] = dur(end - beg).count();
             std::cout << '\t' << (times[i]/(curJumps*conc))*1e9;
+            //check8sum = 0;
+            times[i] = 0;
+            for (uint64_t k = 0; k < conc; ++k)
+                times[i] += (check[k]-arr)/8;
+            //std::cout << "<" << check8sum << ">";
+            //times[i] = check8sum;
         }
         check += conc;
         std::cout << '\n';

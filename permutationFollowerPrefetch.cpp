@@ -152,6 +152,9 @@ int main(int argc, char* argv[]) {
             end = clk::now();
             times[i] = dur(end - beg).count();
             std::cout << '\t' << (times[i]/(curJumps*conc))*1e9;
+            times[i] = 0;
+            for (uint64_t k = 0; k < conc; ++k)
+                times[i] += (check[k]-arr)/8;
         }
         check += conc;
         std::cout << '\n';

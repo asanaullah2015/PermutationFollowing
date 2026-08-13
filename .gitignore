@@ -9,3 +9,5 @@ permutationFollowerPrefetchHugePages
 perf-cpp
 permTest*
 slurm-*.out
+perms/
+outputs/
