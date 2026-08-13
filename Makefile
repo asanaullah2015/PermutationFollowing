@@ -1,6 +1,6 @@
 SHELL = /bin/bash
 
-progs = ./permutationGenerator ./permutationFollowerSequential ./permutationFollowerSequentialHugePages ./permutationGeneratorConcurrent ./permutationFollowerConcurrent ./permutationFollowerConcurrentHugePages ./permutationFollowerPrefetch ./permutationFollowerPrefetchHugePages
+progs = ./permutationGenerator ./permutationFollowerSequential ./permutationFollowerSequentialHugePages ./permutationGeneratorConcurrent ./permutationFollowerConcurrent ./permutationFollowerConcurrentHugePages ./permutationFollowerPrefetch ./permutationFollowerPrefetchHugePages ./permutationFollowerSIMD ./permutationFollowerSIMDHugePages
 numIter = 5
 maxPerm = 1048576
 outputPrefix = testPerm
