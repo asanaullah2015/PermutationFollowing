@@ -8,6 +8,8 @@ permutationFollowerPrefetch
 permutationFollowerPrefetchHugePages
 permutationFollowerSIMD
 permutationFollowerSIMDHugePages
+permutationFollowerParallel
+permutationFollowerParallelHugePages
 perf-cpp
 permTest*
 slurm-*.out

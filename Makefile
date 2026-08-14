@@ -1,6 +1,6 @@
 SHELL = /bin/bash
 
-progs = ./permutationGenerator ./permutationFollowerSequential ./permutationFollowerSequentialHugePages ./permutationGeneratorConcurrent ./permutationFollowerConcurrent ./permutationFollowerConcurrentHugePages ./permutationFollowerPrefetch ./permutationFollowerPrefetchHugePages ./permutationFollowerSIMD ./permutationFollowerSIMDHugePages
+progs = ./permutationGenerator ./permutationFollowerSequential ./permutationFollowerSequentialHugePages ./permutationGeneratorConcurrent ./permutationFollowerConcurrent ./permutationFollowerConcurrentHugePages ./permutationFollowerPrefetch ./permutationFollowerPrefetchHugePages ./permutationFollowerSIMD ./permutationFollowerSIMDHugePages ./permutationFollowerParallel ./permutationFollowerParallelHugePages
 numIter = 5
 maxPerm = 1048576
 outputPrefix = testPerm
@@ -23,6 +23,8 @@ generate: permutationGenerator
 	done
 
 ./permutationFollowerSequential: $(lib_dir)
+
+permutationFollowerParallel permutationFollowerParallelHugePages: CXXFLAGS+=-fopenmp
 
 $(lib_dir): perf-cpp
 	 cd perf-cpp && git checkout v1.0 && cmake . -B build -DCMAKE_INSTALL_PREFIX=./ && cmake --build build && cmake --install build
