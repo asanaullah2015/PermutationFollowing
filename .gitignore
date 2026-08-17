@@ -10,6 +10,10 @@ permutationFollowerSIMD
 permutationFollowerSIMDHugePages
 permutationFollowerParallel
 permutationFollowerParallelHugePages
+permutationFollowerParallelConcurrent16
+permutationFollowerParallelConcurrent16HugePages
+permutationFollowerParallelPrefetch16
+permutationFollowerParallelPrefetch16HugePages
 perf-cpp
 permTest*
 slurm-*.out

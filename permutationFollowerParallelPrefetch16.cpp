@@ -5,6 +5,8 @@
 //#include<perfcpp/event_counter.hpp>
 #include<omp.h>
 
+const uint64_t CONCURRENCY_PER_CORE = 16;
+
 int main(int argc, char* argv[]) {
     uint64_t iterations;
     char* t = nullptr;
@@ -140,53 +142,71 @@ int main(int argc, char* argv[]) {
 
     //std::vector<perf::CounterResult> counts(iterations);
     //void** p = arr;
-    for (uint64_t par = 2; par <= maxParallelism; ++par) {
-        std::cout << elements*cacheLineSize << '\t' << elements << '\t' << jumps << '\t' << par;
-        //uint64_t check8sum = 0;
-        //std::cout << "{";
-        //for (uint64_t i = 0; i < 8; ++i) {
-            //std::cout << (check[i]-arr)/8 << ',';
-            //check8sum += (check[i]-arr)/8;
-        //}
-        //std::cout << "}";
-        //std::cout << "<" << check8sum << ">\n";
-        uint64_t curJumps = jumps/par + (jumps % par != 0);
-        for (uint64_t i = 0; i < iterations; ++i) {
-            #pragma omp parallel num_threads(par)
-            {
-                uint64_t k = omp_get_thread_num();
-                void** p = check[k];
-                #pragma omp barrier
-                #pragma omp masked
-                beg = clk::now();
-                for (uint64_t j = 0; j < curJumps; ++j) {
-                    p = reinterpret_cast<void**>(*p);
-                    //check8sum = 0;
-                    //std::cout << "{";
-                    //for (uint64_t i = 0; i < 8; ++i){
-                        //check8sum += (check[i]-arr)/8;
-                        //std::cout << (check[i]-arr)/8 << ',';
-                    //}
-                    //std::cout << "}";
-                    //std::cout << "<" << check8sum << ">\n";
-                    //return 1;
+    for (uint64_t tot = 2; tot <= maxParallelism; ++tot) {
+        if (tot %  CONCURRENCY_PER_CORE == 0 && tot != CONCURRENCY_PER_CORE) {
+            uint64_t cores = tot/CONCURRENCY_PER_CORE;
+            std::cout << elements*cacheLineSize << '\t' << elements << '\t' << jumps 
+                << '\t' << cores << '\t' << CONCURRENCY_PER_CORE << '\t' << tot;
+            //uint64_t check8sum = 0;
+            //std::cout << "{";
+            //for (uint64_t i = 0; i < 8; ++i) {
+                //std::cout << (check[i]-arr)/8 << ',';
+                //check8sum += (check[i]-arr)/8;
+            //}
+            //std::cout << "}";
+            //std::cout << "<" << check8sum << ">\n";
+            uint64_t curJumps = jumps/tot + (jumps % tot != 0);
+            uint64_t bytesNeeded = CONCURRENCY_PER_CORE*bytesPerPointer;
+            if (bytesNeeded % cacheLineSize) 
+                bytesNeeded += cacheLineSize - (bytesNeeded % cacheLineSize);
+            for (uint64_t i = 0; i < iterations; ++i) {
+                #pragma omp parallel num_threads(cores)
+                {
+                    uint64_t l = omp_get_thread_num();
+                    void*** p = reinterpret_cast<void***>(std::aligned_alloc(cacheLineSize, bytesNeeded));
+                    for (uint64_t k = 0; k < CONCURRENCY_PER_CORE; ++k)
+                        p[k] = check[l*CONCURRENCY_PER_CORE + k];
+                    #pragma omp barrier
+                    #pragma omp masked
+                    beg = clk::now();
+                    for (uint64_t k = 0; k < CONCURRENCY_PER_CORE; ++k)
+                        //__builtin_prefetch(p[k]); //gcc function
+                        __builtin_prefetch(p[k], 0, 3); //gcc function
+                    for (uint64_t j = 0; j < curJumps; ++j) {
+                        for (uint64_t k = 0; k < CONCURRENCY_PER_CORE; ++k) {
+                            p[k] = reinterpret_cast<void**>(*(p[k]));
+                            //__builtin_prefetch(p[k]); //gcc function
+                            __builtin_prefetch(p[k], 0, 3); //gcc function
+                        }
+                        //check8sum = 0;
+                        //std::cout << "{";
+                        //for (uint64_t i = 0; i < 8; ++i){
+                            //check8sum += (check[i]-arr)/8;
+                            //std::cout << (check[i]-arr)/8 << ',';
+                        //}
+                        //std::cout << "}";
+                        //std::cout << "<" << check8sum << ">\n";
+                        //return 1;
+                    }
+                    #pragma omp barrier
+                    #pragma omp masked
+                    end = clk::now();
+                    for (uint64_t k = 0; k < CONCURRENCY_PER_CORE; ++k)
+                        check[l*CONCURRENCY_PER_CORE + k] = p[k];
+                    std::free(p);
                 }
-                #pragma omp barrier
-                #pragma omp masked
-                end = clk::now();
-                check[k] = p;
+                times[i] = dur(end - beg).count();
+                std::cout << '\t' << (times[i]/(curJumps*tot))*1e9;
+                //check8sum = 0;
+                times[i] = 0;
+                for (uint64_t k = 0; k < tot; ++k)
+                    times[i] += (check[k]-arr)/8;
+                //std::cout << "<" << check8sum << ">";
+                //times[i] = check8sum;
             }
-            times[i] = dur(end - beg).count();
-            std::cout << '\t' << (times[i]/(curJumps*par))*1e9;
-            //check8sum = 0;
-            times[i] = 0;
-            for (uint64_t k = 0; k < par; ++k)
-                times[i] += (check[k]-arr)/8;
-            //std::cout << "<" << check8sum << ">";
-            //times[i] = check8sum;
+            std::cout << '\n';
         }
-        check += par;
-        std::cout << '\n';
+        check += tot;
     }
     //for (const auto [event_name, value] : counts[0]) {
     //    std::cout << event_name << "\t|\t:";

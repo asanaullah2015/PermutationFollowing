@@ -1,6 +1,12 @@
 SHELL = /bin/bash
 
-progs = ./permutationGenerator ./permutationFollowerSequential ./permutationFollowerSequentialHugePages ./permutationGeneratorConcurrent ./permutationFollowerConcurrent ./permutationFollowerConcurrentHugePages ./permutationFollowerPrefetch ./permutationFollowerPrefetchHugePages ./permutationFollowerSIMD ./permutationFollowerSIMDHugePages ./permutationFollowerParallel ./permutationFollowerParallelHugePages
+progs = ./permutationGenerator ./permutationFollowerSequential ./permutationFollowerSequentialHugePages \
+		./permutationGeneratorConcurrent ./permutationFollowerConcurrent ./permutationFollowerConcurrentHugePages \
+		./permutationFollowerPrefetch ./permutationFollowerPrefetchHugePages \
+		./permutationFollowerSIMD ./permutationFollowerSIMDHugePages \
+		./permutationFollowerParallel ./permutationFollowerParallelHugePages \
+		./permutationFollowerParallelConcurrent16 ./permutationFollowerParallelConcurrent16HugePages \
+		./permutationFollowerParallelPrefetch16 ./permutationFollowerParallelPrefetch16HugePages
 numIter = 5
 maxPerm = 1048576
 outputPrefix = testPerm
@@ -24,7 +30,7 @@ generate: permutationGenerator
 
 ./permutationFollowerSequential: $(lib_dir)
 
-permutationFollowerParallel permutationFollowerParallelHugePages: CXXFLAGS+=-fopenmp
+permutationFollowerParallel permutationFollowerParallelHugePages permutationFollowerParallelConcurrent16 permutationFollowerParallelConcurrent16HugePages permutationFollowerParallelPrefetch16 permutationFollowerParallelPrefetch16HugePages: CXXFLAGS+=-fopenmp
 
 $(lib_dir): perf-cpp
 	 cd perf-cpp && git checkout v1.0 && cmake . -B build -DCMAKE_INSTALL_PREFIX=./ && cmake --build build && cmake --install build
